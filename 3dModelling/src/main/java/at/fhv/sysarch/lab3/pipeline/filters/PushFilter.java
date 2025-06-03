@@ -2,7 +2,7 @@ package at.fhv.sysarch.lab3.pipeline.filters;
 
 import at.fhv.sysarch.lab3.obj.Face;
 
-import java.nio.channels.Pipe;
+import at.fhv.sysarch.lab3.pipeline.pipe.Pipe;
 
 public interface PushFilter<T, O> {
 
