@@ -1,0 +1,10 @@
+package at.fhv.sysarch.lab3.pipeline.filters;
+
+import at.fhv.sysarch.lab3.pipeline.pipe.Pipe;
+
+public interface PullFilter <T,O> {
+
+     void setPrevious(Pipe<T> prev);
+
+     O pull();
+}
