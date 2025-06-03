@@ -1,32 +1,63 @@
 package at.fhv.sysarch.lab3.pipeline.filters;
+
 import at.fhv.sysarch.lab3.obj.Face;
+import at.fhv.sysarch.lab3.pipeline.pipe.Pipe;
 import com.hackoeur.jglm.Mat4;
-public class ModelViewTransformationFilter implements PushFilter{
-    private PushFilter next;
-    private Mat4 modelViewTransform;
 
-public ModelViewTransformationFilter(PushFilter next){
-    this.next=next;
-}
+public class ModelViewTransformationFilter implements PushFilter<Face, Face>, PullFilter<Face,Face>{
 
-public void setModelViewTransform(Mat4 transform){
-    this.modelViewTransform=transform;
-}
+    private Pipe<Face> next;
+    private Pipe<Face> prev;
+    private Mat4 viewPortTransform;
 
-@Override
-    public void push(Face face){
-    Face transformed = new Face(
-            modelViewTransform.multiply(face.getV1()),
-            modelViewTransform.multiply(face.getV2()),
-            modelViewTransform.multiply(face.getV3()),
 
-            new Face(modelViewTransform.multiply(face.getN1()),
-                    modelViewTransform.multiply(face.getN2()),
-                    modelViewTransform.multiply(face.getN3()),
-                    null
-            )
-    );
+    public ModelViewTransformationFilter(Mat4 viewPortTransform){
+        this.viewPortTransform=viewPortTransform;
 
-    next.push(transformed);
-}
+    }
+
+    @Override
+    public void setPrevious(Pipe<Face> prev) {
+        this.prev=prev;
+
+    }
+
+    @Override
+    public Face pull() {
+        if (prev== null) return null;
+
+        Face face = prev.pull();
+        if(face==null) return null;
+        return transform(face);
+    }
+
+    @Override
+    public void setNext(Pipe<Face> next) {
+        this.next=next;
+
+    }
+
+    @Override
+    public void push(Face input) {
+        Face transformers= transform(input);
+        if(next!=null){
+            next.push(transformers);
+        }
+
+    }
+
+    private Face transform(Face face) {
+        return new Face(
+                viewPortTransform.multiply(face.getV1()),
+                viewPortTransform.multiply(face.getV2()),
+                viewPortTransform.multiply(face.getV3()),
+
+                new Face(
+                        viewPortTransform.multiply(face.getN1()),
+                        viewPortTransform.multiply(face.getN2()),
+                        viewPortTransform.multiply(face.getN3()),
+                        null
+                )
+        );
+    }
 }
