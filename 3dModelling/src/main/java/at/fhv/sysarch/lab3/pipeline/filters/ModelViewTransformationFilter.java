@@ -8,11 +8,11 @@ public class ModelViewTransformationFilter implements PushFilter<Face, Face>, Pu
 
     private Pipe<Face> next;
     private Pipe<Face> prev;
-    private Mat4 viewPortTransform;
+    private Mat4 modelViewTransform;
 
 
-    public ModelViewTransformationFilter(Mat4 viewPortTransform){
-        this.viewPortTransform=viewPortTransform;
+    public ModelViewTransformationFilter(Mat4 modelViewTransform){
+        this.modelViewTransform=modelViewTransform;
 
     }
 
@@ -48,14 +48,14 @@ public class ModelViewTransformationFilter implements PushFilter<Face, Face>, Pu
 
     private Face transform(Face face) {
         return new Face(
-                viewPortTransform.multiply(face.getV1()),
-                viewPortTransform.multiply(face.getV2()),
-                viewPortTransform.multiply(face.getV3()),
+                modelViewTransform.multiply(face.getV1()),
+                modelViewTransform.multiply(face.getV2()),
+                modelViewTransform.multiply(face.getV3()),
 
                 new Face(
-                        viewPortTransform.multiply(face.getN1()),
-                        viewPortTransform.multiply(face.getN2()),
-                        viewPortTransform.multiply(face.getN3()),
+                        modelViewTransform.multiply(face.getN1()),
+                        modelViewTransform.multiply(face.getN2()),
+                        modelViewTransform.multiply(face.getN3()),
                         null
                 )
         );
