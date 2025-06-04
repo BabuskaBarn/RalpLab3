@@ -1,53 +1,67 @@
 package at.fhv.sysarch.lab3.pipeline.filters;
 
 import at.fhv.sysarch.lab3.obj.Face;
+import at.fhv.sysarch.lab3.pipeline.data.Pair;
 import at.fhv.sysarch.lab3.pipeline.pipe.Pipe;
 import com.hackoeur.jglm.Mat4;
+import javafx.scene.paint.Color;
 
-public class ScreenSpaceTransformFilter implements PushFilter<Face, Face>, PullFilter<Face, Face> {
+
+//Todo anpassen an viewport filter
+
+public class ScreenSpaceTransformFilter implements PushFilter<Pair<Face, Color>, Pair<Face, Color>>, PullFilter<Pair<Face, Color>, Pair<Face, Color>> {
 
     private final Mat4 viewportTransform;
-    private Pipe<Face> next;
-    private Pipe<Face> prev;
+    private Mat4 projTranform;
+    private Pipe<Pair<Face, Color>> next;
 
-    public ScreenSpaceTransformFilter(Mat4 viewportTransform) {
+    private Pipe<Pair<Face, Color>> prev;
+    public ScreenSpaceTransformFilter(Mat4 viewportTransform, Mat4 projTranform) {
+
         this.viewportTransform = viewportTransform;
+        this.projTranform = projTranform;
     }
 
     @Override
-    public void setNext(Pipe<Face> next) {
+    public void setNext(Pipe<Pair<Face, Color>> next) {
         this.next = next;
     }
 
     @Override
-    public void setPrevious(Pipe<Face> prev) {
+    public void setPrevious(Pipe<Pair<Face, Color>> prev) {
         this.prev = prev;
     }
 
     @Override
-    public void push(Face face) {
-        Face screenSpace = applyViewportTransform(face);
-        if (next != null) {
-            next.push(screenSpace);
-        }
+    public void push(Pair<Face, Color> input) {
+       this.next.push(applyViewportTransform(input));
     }
 
     @Override
-    public Face pull() {
-        if (prev == null) return null;
-
-        Face face = prev.pull();
-        if (face == null) return null;
-
-        return applyViewportTransform(face);
+    public Pair<Face, Color> pull() {
+        Pair<Face, Color> daten = prev.pull();
+        if(daten!= null){
+            return applyViewportTransform(daten)
+        }
+        return null;
     }
 
-    private Face applyViewportTransform(Face face) {
-        return new Face(
-                viewportTransform.multiply(face.getV1()),
-                viewportTransform.multiply(face.getV2()),
-                viewportTransform.multiply(face.getV3()),
-                new Face(face.getN1(), face.getN2(), face.getN3(), null)
+    private  Pair<Face, Color> applyViewportTransform(Pair<Face, Color> daten) {
+        Face face = daten.fst();
+        Face dividedFace = new Face(
+                face.getV1().multiply((1 / face.getV1().getW())),
+                face.getV2().multiply((1 / face.getV2().getW())),
+                face.getV3().multiply((1 / face.getV3().getW())),
+                face
         );
+
+        Face transformedFace = new Face(
+                viewportTransform.multiply(dividedFace.getV1()),
+                viewportTransform.multiply(dividedFace.getV2()),
+                viewportTransform.multiply(dividedFace.getV3()),
+                dividedFace
+        );
+
+        return new Pair<>(transformedFace, daten.snd());
     }
 }
