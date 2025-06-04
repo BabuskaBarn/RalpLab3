@@ -73,7 +73,9 @@ public class LightingFilter implements PushFilter<Face, Face>, PullFilter<Face, 
     }
 }
 
-/* Wir werden die Farbe bei den factorys applyen
+/* Wir werden die Farbe bei den factorys applien
 
+
+ */
 
 
