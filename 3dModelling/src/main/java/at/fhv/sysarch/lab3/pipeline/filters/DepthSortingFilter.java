@@ -31,13 +31,12 @@ public class DepthSortingFilter implements PushFilter<List<Face>, Face>, PullFil
 
                     float zf1 = (z1 + z2 + z3) / 3;
 
-                    Vec3 vertex1f2 = f1.getV1().toVec3();
-                    Vec3 vertex2f2 = f1.getV2().toVec3();
-                    Vec3 vertex3f2 = f1.getV3().toVec3();
 
                     z1 = vertex1f1.subtract(viewPort).getLength();
                     z2 = vertex2f1.subtract(viewPort).getLength();
                     z3 = vertex3f1.subtract(viewPort).getLength();
+
+
 
                     float zf2 = (z1 + z2 + z3) / 3;
 
@@ -91,13 +90,7 @@ public class DepthSortingFilter implements PushFilter<List<Face>, Face>, PullFil
 
                     float zf1 = (z1 + z2 + z3) / 3;
 
-                    Vec3 vertex1f2 = f1.getV1().toVec3();
-                    Vec3 vertex2f2 = f1.getV2().toVec3();
-                    Vec3 vertex3f2 = f1.getV3().toVec3();
 
-                    z1 = vertex1f1.subtract(viewPort).getLength();
-                    z2 = vertex2f1.subtract(viewPort).getLength();
-                    z3 = vertex3f1.subtract(viewPort).getLength();
 
                     float zf2 = (z1 + z2 + z3) / 3;
 

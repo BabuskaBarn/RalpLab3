@@ -48,7 +48,7 @@ public class RotationFilter implements PushFilter<List<Face>, List<Face>>, PullF
         return null;
     }
 
-
+    //Mathematische Methode zur Rotation im 3D-Raum
     private Face applyRotation(Face face) {
         Vec4 newV1 = rotationMatrix.multiply(face.getV1());
         Vec4 newV2 = rotationMatrix.multiply(face.getV2());

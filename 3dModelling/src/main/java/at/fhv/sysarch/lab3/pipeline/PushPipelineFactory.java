@@ -36,13 +36,13 @@ public class PushPipelineFactory {
         rotationFilter.setNext(pipeModelViewToCulling);
         pipeModelViewToCulling.setNext(backfaceCulling);
 
-        // 5. Depth Sorting (List<Face>)
+        // 4. Depth Sorting (List<Face>)
         DepthSortingFilter depthSortingFilter = new DepthSortingFilter(pd.getViewingEye());
         Pipe<List<Face>> pipeCullingToDepthSorting = new Pipe<>();
         backfaceCulling.setNext(pipeCullingToDepthSorting);
         pipeCullingToDepthSorting.setNext(depthSortingFilter);
 
-        // 6. ColorFilter (Face -> Pair<Face, Color>)
+        // 5. ColorFilter (Face -> Pair<Face, Color>)
 
         ColorFilter colorFilter = new ColorFilter(pd.getModelColor());
        Pipe<Face> depthSortingToColor= new Pipe<>();
@@ -58,10 +58,10 @@ public class PushPipelineFactory {
             colorLightningPipe.setNext(lightingFilter);
             colorFilter.setNext(colorLightningPipe);
 
-            // 5. perform projection transformation on VIEW SPACE coordinates
+            // 6. perform projection transformation on VIEW SPACE coordinates
             lightingFilter.setNext(projection);
         } else {
-            // 5. perform projection transformation
+            // 6. perform projection transformation
             colorFilter.setNext(projection);
         }
 
