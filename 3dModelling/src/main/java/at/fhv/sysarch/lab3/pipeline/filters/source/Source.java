@@ -56,5 +56,8 @@ public class Source implements PushFilter<Model, List<Face>>, PullFilter<Object,
         this.model=model;
     }
 
+    public void reset(){
+        index=0;
+    }
 
 }

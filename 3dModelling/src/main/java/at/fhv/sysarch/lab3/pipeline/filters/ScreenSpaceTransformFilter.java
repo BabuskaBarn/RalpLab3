@@ -7,7 +7,7 @@ import com.hackoeur.jglm.Mat4;
 import javafx.scene.paint.Color;
 
 
-//Todo anpassen an viewport filter
+
 
 public class ScreenSpaceTransformFilter implements PushFilter<Pair<Face, Color>, Pair<Face, Color>>, PullFilter<Pair<Face, Color>, Pair<Face, Color>> {
 
@@ -17,9 +17,9 @@ public class ScreenSpaceTransformFilter implements PushFilter<Pair<Face, Color>,
 
     private Pipe<Pair<Face, Color>> prev;
     public ScreenSpaceTransformFilter(Mat4 viewportTransform, Mat4 projTranform) {
-
+        this.projTranform=projTranform;
         this.viewportTransform = viewportTransform;
-        this.projTranform = projTranform;
+
     }
 
     @Override
@@ -41,7 +41,7 @@ public class ScreenSpaceTransformFilter implements PushFilter<Pair<Face, Color>,
     public Pair<Face, Color> pull() {
         Pair<Face, Color> daten = prev.pull();
         if(daten!= null){
-            return applyViewportTransform(daten)
+            return applyViewportTransform(daten);
         }
         return null;
     }

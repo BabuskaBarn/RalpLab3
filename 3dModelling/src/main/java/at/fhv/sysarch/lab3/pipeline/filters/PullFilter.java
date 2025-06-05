@@ -6,5 +6,5 @@ public interface PullFilter <T,O> {
 
      void setPrevious(Pipe<T> prev);
 
-     O pull();
+     public O pull();
 }

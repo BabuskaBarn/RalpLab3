@@ -3,57 +3,79 @@ package at.fhv.sysarch.lab3.pipeline.filters.sink;
 import at.fhv.sysarch.lab3.obj.Face;
 import at.fhv.sysarch.lab3.pipeline.data.Pair;
 import at.fhv.sysarch.lab3.pipeline.filters.PushFilter;
-
+import at.fhv.sysarch.lab3.pipeline.filters.PullFilter;
 import at.fhv.sysarch.lab3.pipeline.pipe.Pipe;
 import at.fhv.sysarch.lab3.rendering.RenderingMode;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
-public class Renderer implements PushFilter<Pair<Face, Color>, Void> {
+public class Renderer implements PushFilter<Pair<Face, Color>, Void>, PullFilter<Pair<Face, Color>, Pair<Face, Color>> {
 
-    private final GraphicsContext gc;
+    private final GraphicsContext gpc;
     private final RenderingMode renderingMode;
+    private Pipe<Pair<Face, Color>> previous;
 
-    public Renderer(GraphicsContext gc, RenderingMode renderingMode) {
-        this.gc = gc;
+    public Renderer(GraphicsContext gpc, RenderingMode renderingMode) {
+        this.gpc = gpc;
         this.renderingMode = renderingMode;
     }
 
-
-
+    // --- PushFilter Interface ---
     @Override
     public void setNext(Pipe<Void> next) {
-        //does nothing
-
+        // intentionally left empty
     }
 
     @Override
-    public void push(Pair<Face, javafx.scene.paint.Color> input) {
+    public void push(Pair<Face, Color> input) {
         render(input);
     }
 
-    private void render(Pair<Face, javafx.scene.paint.Color> pair) {
-        Face face = pair.fst();
-        javafx.scene.paint.Color color = pair.snd();
-        gc.setStroke(color);
-        gc.setFill(color);
+    // --- PullFilter Interface ---
+    @Override
+    public void setPrevious(Pipe<Pair<Face, Color>> prev) {
+        this.previous = prev;
+    }
 
-        switch (renderingMode) {
-            case POINT -> {
-                gc.fillOval(face.getV1().getX(), face.getV1().getY(), 1, 1);
-                gc.fillOval(face.getV2().getX(), face.getV2().getY(), 1, 1);
-                gc.fillOval(face.getV3().getX(), face.getV3().getY(), 1, 1);
+    @Override
+    public Pair<Face, Color> pull() {
+        boolean notEmpty = true;
+        while (notEmpty) {
+            Pair<Face, Color> render = previous.pull();
+            if (render != null) {
+                render(render);
+
+            }else {
+                notEmpty = false;
             }
-            case WIREFRAME -> {
-                gc.strokeLine(face.getV1().getX(), face.getV1().getY(), face.getV2().getX(), face.getV2().getY());
-                gc.strokeLine(face.getV2().getX(), face.getV2().getY(), face.getV3().getX(), face.getV3().getY());
-                gc.strokeLine(face.getV3().getX(), face.getV3().getY(), face.getV1().getX(), face.getV1().getY());
-            }
-            case FILLED -> {
-                double[] x = {face.getV1().getX(), face.getV2().getX(), face.getV3().getX()};
-                double[] y = {face.getV1().getY(), face.getV2().getY(), face.getV3().getY()};
-                gc.fillPolygon(x, y, 3);
-            }
+        }
+        return null;
+    }
+
+
+    // --- Render-Methode ---
+    private void render(Pair<Face, Color> render) {
+        gpc.setStroke(render.snd());
+        int width = 1;
+        int height = 1;
+        Face face = render.fst();
+        if(this.renderingMode == RenderingMode.POINT) {
+            gpc.setFill(render.snd());
+            gpc.fillOval(face.getV1().getX(), face.getV1().getY(), width, height);
+            gpc.fillOval(face.getV2().getX(), face.getV2().getY(), width, height);
+            gpc.fillOval(face.getV3().getX(), face.getV3().getY(), width, height);
+        } else if(this.renderingMode == RenderingMode.WIREFRAME) {
+            gpc.strokeLine(face.getV1().getX(), face.getV1().getY(), face.getV2().getX(), face.getV2().getY());
+            gpc.strokeLine(face.getV2().getX(), face.getV2().getY(), face.getV3().getX(), face.getV3().getY());
+            gpc.strokeLine(face.getV1().getX(), face.getV1().getY(), face.getV3().getX(), face.getV3().getY());
+        } else if(this.renderingMode == RenderingMode.FILLED) {
+            double[] xPoints = {face.getV1().getX(), face.getV2().getX(), face.getV3().getX()};
+            double[] yPoints = {face.getV1().getY(), face.getV2().getY(), face.getV3().getY()};
+            gpc.setFill(render.snd());
+            gpc.fillPolygon(xPoints, yPoints, 3);
         }
     }
 }
+
+
+

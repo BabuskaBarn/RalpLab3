@@ -1,60 +1,117 @@
 package at.fhv.sysarch.lab3.pipeline;
 
 import at.fhv.sysarch.lab3.animation.AnimationRenderer;
+import at.fhv.sysarch.lab3.obj.Face;
 import at.fhv.sysarch.lab3.obj.Model;
+import at.fhv.sysarch.lab3.pipeline.data.Pair;
+import at.fhv.sysarch.lab3.pipeline.filters.*;
+import at.fhv.sysarch.lab3.pipeline.filters.sink.Renderer;
+import at.fhv.sysarch.lab3.pipeline.filters.source.Source;
+import at.fhv.sysarch.lab3.pipeline.pipe.Pipe;
+import com.hackoeur.jglm.Mat4;
+import com.hackoeur.jglm.Matrices;
 import javafx.animation.AnimationTimer;
+import javafx.scene.paint.Color;
+
+import java.util.List;
 
 public class PushPipelineFactory {
+
     public static AnimationTimer createPipeline(PipelineData pd) {
 
+        // 1. Quelle liefert List<Face>
+        Source source = new Source();
 
-        // TODO: push from the source (model)
+        // 2. Rotation (List<Face>)
+        RotationFilter rotationFilter = new RotationFilter();
+        Pipe<List<Face>> pipeSourceToRotation = new Pipe<>();
+        source.setNext(pipeSourceToRotation);
+        pipeSourceToRotation.setNext(rotationFilter);
 
-        // TODO 1. perform model-view transformation from model to VIEW SPACE coordinates
 
-        // TODO 2. perform backface culling in VIEW SPACE
 
-        // TODO 3. perform depth sorting in VIEW SPACE
+        // 3. Backface Culling (List<Face>)
+        BackfaceCullingFilter backfaceCulling = new BackfaceCullingFilter();
+        Pipe<List<Face>> pipeModelViewToCulling = new Pipe<>();
+        rotationFilter.setNext(pipeModelViewToCulling);
+        pipeModelViewToCulling.setNext(backfaceCulling);
 
-        // TODO 4. add coloring (space unimportant)
+        // 5. Depth Sorting (List<Face>)
+        DepthSortingFilter depthSortingFilter = new DepthSortingFilter(pd.getViewingEye());
+        Pipe<List<Face>> pipeCullingToDepthSorting = new Pipe<>();
+        backfaceCulling.setNext(pipeCullingToDepthSorting);
+        pipeCullingToDepthSorting.setNext(depthSortingFilter);
 
-        // lighting can be switched on/off
+        // 6. ColorFilter (Face -> Pair<Face, Color>)
+
+        ColorFilter colorFilter = new ColorFilter(pd.getModelColor());
+       Pipe<Face> depthSortingToColor= new Pipe<>();
+       depthSortingToColor.setNext(colorFilter);
+       depthSortingFilter.setNext(depthSortingToColor);
+
+       ProjectionModelTransformationFilter PMTF = new ProjectionModelTransformationFilter(pd.getProjTransform());
+       Pipe<Pair<Face, Color>> projection = new Pipe<>();
+       projection.setNext(PMTF);
         if (pd.isPerformLighting()) {
-            // 4a. TODO perform lighting in VIEW SPACE
-            
-            // 5. TODO perform projection transformation on VIEW SPACE coordinates
+            LightingFilter lightingFilter = new LightingFilter(pd.getLightPos());
+            Pipe<Pair<Face, Color>> colorLightningPipe = new Pipe<>();
+            colorLightningPipe.setNext(lightingFilter);
+            colorFilter.setNext(colorLightningPipe);
+
+            // 5. perform projection transformation on VIEW SPACE coordinates
+            lightingFilter.setNext(projection);
         } else {
-            // 5. TODO perform projection transformation
+            // 5. perform projection transformation
+            colorFilter.setNext(projection);
         }
 
-        // TODO 6. perform perspective division to screen coordinates
+        // 7. Screen Space Transform
+        ScreenSpaceTransformFilter screenTransformFilter = new ScreenSpaceTransformFilter(
+                pd.getViewportTransform(), pd.getProjTransform());  // <- second argument was wrong in your code
+        Pipe<Pair<Face, Color>> PMTFToScreen = new Pipe<>();
+        PMTF.setNext(PMTFToScreen);
+        PMTFToScreen.setNext(screenTransformFilter);
 
-        // TODO 7. feed into the sink (renderer)
+// 8. Renderer (sink)
+        Renderer renderer = new Renderer(pd.getGraphicsContext(), pd.getRenderingMode());
+        Pipe<Pair<Face, Color>> pipeScreenToRenderer = new Pipe<>();
+        screenTransformFilter.setNext(pipeScreenToRenderer);
+        pipeScreenToRenderer.setNext(renderer);
 
-        // returning an animation renderer which handles clearing of the
-        // viewport and computation of the praction
+
+
+
+
+        // AnimationTimer mit Rotation und Render-Callback
         return new AnimationRenderer(pd) {
-            // TODO rotation variable goes in here
-
-            /** This method is called for every frame from the JavaFX Animation
-             * system (using an AnimationTimer, see AnimationRenderer). 
+            private float rotation = 0;
+            /**
+             * This method is called for every frame from the JavaFX Animation
+             * system (using an AnimationTimer, see AnimationRenderer).
+             *
              * @param fraction the time which has passed since the last render call in a fraction of a second
-             * @param model    the model to render 
+             * @param model    the model to render
              */
+
             @Override
             protected void render(float fraction, Model model) {
+                rotation += ((fraction) % (2 * Math.PI));
+                source.setModel(model);
+                source.reset();
 
-                // TODO compute rotation in radians
+                Mat4 rotationMatrix = Matrices.rotate(rotation, pd.getModelRotAxis());
+                Mat4 modelTranslationMatrix = pd.getModelTranslation().multiply(rotationMatrix);
 
-                // TODO create new model rotation matrix using pd.modelRotAxis
+                // compute updated model-view tranformation
+                Mat4 viewTransformationMatrix = pd.getViewTransform().multiply(modelTranslationMatrix);
 
-                // TODO compute updated model-view tranformation
+                // update model-view filter
+                rotationFilter.setRotationMatrix(viewTransformationMatrix);
 
-                // TODO update model-view filter
-
-                // TODO trigger rendering of the pipeline
-
+                // trigger rendering of the pipeline
+                source.push(model);
             }
+
         };
     }
 }

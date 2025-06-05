@@ -27,18 +27,15 @@ public class ColorFilter implements PushFilter<Face, Pair<Face, Color>>, PullFil
 
     @Override
     public void push(Face input) {
-        if (next != null) {
-            next.push(new Pair<>(input, color));
-        }
+        this.next.push(new Pair<>(input, color));
     }
 
     @Override
     public Pair<Face, Color> pull() {
-        if (prev == null) return null;
-        Face data = prev.pull();
-        if (data != null) {
-            return new Pair<>(data, color);
+       Face data = prev.pull();
+       if(data!=null){
+           return new  Pair<>(data, color);
         }
-        return null;
+       return null;
     }
 }

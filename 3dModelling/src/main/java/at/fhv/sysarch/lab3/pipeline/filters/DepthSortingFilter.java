@@ -4,93 +4,135 @@ import at.fhv.sysarch.lab3.obj.Face;
 import at.fhv.sysarch.lab3.pipeline.data.Pair;
 import at.fhv.sysarch.lab3.pipeline.pipe.Pipe;
 import com.hackoeur.jglm.Vec3;
-import javafx.scene.paint.Color;
-import java.util.*;
 
-public class DepthSortingFilter implements PushFilter<List<Pair<Face, Color>>, Pair<Face, Color>>, PullFilter<Pair<Face, Color>, Pair<Face, Color>> {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.PriorityQueue;
 
-    private Pipe<Pair<Face, Color>> pipe;
+public class DepthSortingFilter implements PushFilter<List<Face>, Face>, PullFilter<Face, Face> {
+
+    private Pipe<Face> pipe;
     private final Vec3 viewPort;
 
     // PriorityQueue zum Sortieren nach Tiefe
-    private PriorityQueue<Pair<Face, Color>> faceQueue;
+    private PriorityQueue<Face> faceQueue;
 
     public DepthSortingFilter(Vec3 viewPort) {
         this.viewPort = viewPort;
         faceQueue = new PriorityQueue<>(
-                (p1, p2) -> {
-                    float z1 = averageDepth(p1.fst());
-                    float z2 = averageDepth(p2.fst());
-                    // Tiefster zuerst = größere Entfernung zuerst => absteigend sortieren
-                    return Float.compare(z2, z1);
+                (f1, f2) -> {
+                    Vec3 vertex1f1 = f1.getV1().toVec3();
+                    Vec3 vertex2f1 = f1.getV2().toVec3();
+                    Vec3 vertex3f1 = f1.getV3().toVec3();
+
+                    float z1 = vertex1f1.subtract(viewPort).getLength();
+                    float z2 = vertex2f1.subtract(viewPort).getLength();
+                    float z3 = vertex3f1.subtract(viewPort).getLength();
+
+                    float zf1 = (z1 + z2 + z3) / 3;
+
+                    Vec3 vertex1f2 = f1.getV1().toVec3();
+                    Vec3 vertex2f2 = f1.getV2().toVec3();
+                    Vec3 vertex3f2 = f1.getV3().toVec3();
+
+                    z1 = vertex1f1.subtract(viewPort).getLength();
+                    z2 = vertex2f1.subtract(viewPort).getLength();
+                    z3 = vertex3f1.subtract(viewPort).getLength();
+
+                    float zf2 = (z1 + z2 + z3) / 3;
+
+                    return Float.compare(zf2, zf1);
                 }
         );
     }
 
     @Override
-    public void setNext(Pipe<Pair<Face,Color>> next) {
+    public void setNext(Pipe<Face> next) {
         this.pipe = next;
     }
 
     @Override
-    public void push(List<Pair<Face, Color>> input) {
-        // Sortiere Faces mit Color nach Tiefe
-        input.sort((p1, p2) -> Float.compare(averageDepth(p2.fst()), averageDepth(p1.fst())));
+    public void push(List<Face> input) {
+        List<Pair<Float,Face>> faces = new ArrayList<>();
 
-        for (Pair<Face, Color> pair : input) {
-            if (pipe != null) {
-                pipe.push(pair);
-            }
+        for (Face face : input) {
+            Vec3 vertex1 = face.getV1().toVec3();
+            Vec3 vertex2 = face.getV2().toVec3();
+            Vec3 vertex3 = face.getV3().toVec3();
+
+            float z1 = vertex1.subtract(viewPort).getLength();
+            float z2 = vertex2.subtract(viewPort).getLength();
+            float z3 = vertex3.subtract(viewPort).getLength();
+
+            float z = (z1 + z2 + z3) / 3;
+
+            faces.add(new Pair<>(z, face));
         }
-    }
+
+        faces.sort((pair1,pair2) -> -pair1.fst().compareTo(pair2.fst()));
+
+        for (Pair<Float,Face> pair : faces) {
+            pipe.push(pair.snd());
+        }}
 
     @Override
-    public void setPrevious(Pipe<Pair<Face, Color>> predecessor) {
-        this.pipe = predecessor;
+    public void setPrevious(Pipe<Face> predecessor) {
+        pipe = predecessor;
         // PriorityQueue neu initialisieren, falls nötig
         faceQueue = new PriorityQueue<>(
-                (p1, p2) -> {
-                    float z1 = averageDepth(p1.fst());
-                    float z2 = averageDepth(p2.fst());
-                    return Float.compare(z2, z1);
+                (f1, f2) -> {
+                    Vec3 vertex1f1 = f1.getV1().toVec3();
+                    Vec3 vertex2f1 = f1.getV2().toVec3();
+                    Vec3 vertex3f1 = f1.getV3().toVec3();
+
+                    float z1 = vertex1f1.subtract(viewPort).getLength();
+                    float z2 = vertex2f1.subtract(viewPort).getLength();
+                    float z3 = vertex3f1.subtract(viewPort).getLength();
+
+                    float zf1 = (z1 + z2 + z3) / 3;
+
+                    Vec3 vertex1f2 = f1.getV1().toVec3();
+                    Vec3 vertex2f2 = f1.getV2().toVec3();
+                    Vec3 vertex3f2 = f1.getV3().toVec3();
+
+                    z1 = vertex1f1.subtract(viewPort).getLength();
+                    z2 = vertex2f1.subtract(viewPort).getLength();
+                    z3 = vertex3f1.subtract(viewPort).getLength();
+
+                    float zf2 = (z1 + z2 + z3) / 3;
+
+                    return Float.compare(zf2, zf1);
                 }
         );
     }
 
-    @Override
-    public Pair<Face, Color> pull() {
-        // Fülle Queue mit allen verfügbaren Faces vom Predecessor
-        while (true) {
-            Pair<Face, javafx.scene.paint.Color> pair;
-            try {
-                pair = pipe.pull();
-                if (pair != null) {
-                    faceQueue.add(pair);
-                } else {
-                    break;
-                }
-            } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+
+
+
+@Override
+public Face pull() {
+    while (true){
+        Face face;
+        try {
+            face = pipe.pull();
+            if (face != null) {
+                faceQueue.add(face);
+            } else {
+
                 break;
             }
+        } catch (IllegalArgumentException ignored) {
+
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+            break;
         }
 
-        // Gibt jeweils den tiefsten Face+Color zurück
-        if (!faceQueue.isEmpty()) {
-            return faceQueue.poll();
-        }
-
-        return null;
+    }
+    while (!faceQueue.isEmpty()) {
+        return faceQueue.poll();
     }
 
-    private float averageDepth(Face face) {
-        Vec3 v1 = face.getV1().toVec3();
-        Vec3 v2 = face.getV2().toVec3();
-        Vec3 v3 = face.getV3().toVec3();
 
-        float d1 = v1.subtract(viewPort).getLength();
-        float d2 = v2.subtract(viewPort).getLength();
-        float d3 = v3.subtract(viewPort).getLength();
-
-        return (d1 + d2 + d3) / 3f;
-    }
+    return null;
+}
 }

@@ -21,9 +21,11 @@ public class Pipe<T> implements PushPipe<T>, PullPipe<T> {
 
     }
 
+
+
     @Override
     public T pull() {
-        return this.pullFilter.pull();
+        return pullFilter.pull();
     }
 
 

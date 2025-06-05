@@ -7,13 +7,14 @@ import com.hackoeur.jglm.Vec4;
 
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class BackfaceCullingFilter implements PushFilter <List<Face>, List<Face>>, PullFilter<Face, Face> {
 
-    /* Batch loading
+    // Batch loading
 
-     */
+
     private Pipe<List<Face>> next;
 
     private Pipe<Face> prev;
@@ -27,33 +28,17 @@ public class BackfaceCullingFilter implements PushFilter <List<Face>, List<Face>
 
     @Override
     public void push(List<Face> input) {
-        List<Face> output = new ArrayList<>();
+        List<Face> output = new LinkedList<>();
 
         for (Face face : input) {
-            if ((isFrontFace(face))) {
+            if(face.getV1().dot(face.getN1()) <= 0) {
                 output.add(face);
             }
         }
-        if (next != null) {
-            next.push(output); // ganzen Batch weitergeben
-        }
+        next.push(output);
     }
 
-    private boolean isFrontFace(Face face) {
-        Vec3 v1 = toVec3(face.getV1());
-        Vec3 v2 = toVec3(face.getV2());
-        Vec3 v3 = toVec3(face.getV3());
 
-        Vec3 edge1 = v2.subtract(v1);
-        Vec3 edge2 = v3.subtract(v1);
-        Vec3 normal = edge1.cross(edge2);
-
-        return normal.getZ() < 0;
-    }
-
-    private Vec3 toVec3(Vec4 vec4) {
-        return new Vec3(vec4.getX(), vec4.getY(), vec4.getZ()); // w wird ignoriert
-    }
 
 
     @Override
