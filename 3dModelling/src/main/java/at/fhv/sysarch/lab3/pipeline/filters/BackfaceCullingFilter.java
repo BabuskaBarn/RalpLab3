@@ -63,6 +63,7 @@ public class BackfaceCullingFilter implements PushFilter <List<Face>, List<Face>
 
 
 
+
 /*  checkt ob das object nach hinten oder vorne gedreht ist
     Wir rendern nur die vorderseite des Objekts
     wir werden den output im psuh verarbeiten

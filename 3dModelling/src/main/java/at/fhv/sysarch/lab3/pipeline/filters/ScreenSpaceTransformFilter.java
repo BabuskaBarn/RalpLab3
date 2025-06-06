@@ -55,8 +55,7 @@ public class ScreenSpaceTransformFilter implements PushFilter<Pair<Face, Color>,
                 face
         );
         /*Jeder Punkt in der Pipeline ist ein Vec4, also ein Vektor mit x, y, z, w.
-
-        Nach der Projektionsmatrix haben die Punkte w != 1 →sie sind in homogenen Koordinaten.
+        Nach der Projektionsmatrix haben die Punkte w != 1 dh. homogenen Koordinaten.
         Teilen durch w für Perspektivteilung
          */
 
