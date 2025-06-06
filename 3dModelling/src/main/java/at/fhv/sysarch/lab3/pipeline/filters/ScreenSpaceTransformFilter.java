@@ -54,6 +54,11 @@ public class ScreenSpaceTransformFilter implements PushFilter<Pair<Face, Color>,
                 face.getV3().multiply((1 / face.getV3().getW())),
                 face
         );
+        /*Jeder Punkt in der Pipeline ist ein Vec4, also ein Vektor mit x, y, z, w.
+
+        Nach der Projektionsmatrix haben die Punkte w != 1 →sie sind in homogenen Koordinaten.
+        Teilen durch w für Perspektivteilung
+         */
 
         Face transformedFace = new Face(
                 viewportTransform.multiply(dividedFace.getV1()),
@@ -61,6 +66,9 @@ public class ScreenSpaceTransformFilter implements PushFilter<Pair<Face, Color>,
                 viewportTransform.multiply(dividedFace.getV3()),
                 dividedFace
         );
+
+        //verschiebt und skaliert die Punkte vom [-1,1] in Pixelkoordinaten[0,800] × [0,600]
+
 
         return new Pair<>(transformedFace, daten.snd());
     }

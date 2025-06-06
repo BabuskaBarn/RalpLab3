@@ -12,6 +12,7 @@ import java.util.PriorityQueue;
 public class DepthSortingFilter implements PushFilter<List<Face>, Face>, PullFilter<Face, Face> {
 
     private Pipe<Face> pipe;
+    //Standort der Kamera
     private final Vec3 viewPort;
 
     // PriorityQueue zum Sortieren nach Tiefe
@@ -53,7 +54,7 @@ public class DepthSortingFilter implements PushFilter<List<Face>, Face>, PullFil
     @Override
     public void push(List<Face> input) {
         List<Pair<Float,Face>> faces = new ArrayList<>();
-
+        // Abstand jedes Eckpunkts zur Kamera berechnen
         for (Face face : input) {
             Vec3 vertex1 = face.getV1().toVec3();
             Vec3 vertex2 = face.getV2().toVec3();
@@ -64,12 +65,12 @@ public class DepthSortingFilter implements PushFilter<List<Face>, Face>, PullFil
             float z3 = vertex3.subtract(viewPort).getLength();
 
             float z = (z1 + z2 + z3) / 3;
-
+        //Face zusammen mit Tiefe speichern
             faces.add(new Pair<>(z, face));
         }
-
+        //Sortiert die Faces von hinten nach vorne
         faces.sort((pair1,pair2) -> -pair1.fst().compareTo(pair2.fst()));
-
+        // Sortierte Faces einzeln an den nächsten Filter weitergeben
         for (Pair<Float,Face> pair : faces) {
             pipe.push(pair.snd());
         }}
@@ -121,6 +122,7 @@ public Face pull() {
         }
 
     }
+    // Gibt das nächste (vorderste) Face zurück
     while (!faceQueue.isEmpty()) {
         return faceQueue.poll();
     }

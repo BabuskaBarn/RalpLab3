@@ -31,6 +31,7 @@ public class BackfaceCullingFilter implements PushFilter <List<Face>, List<Face>
         List<Face> output = new LinkedList<>();
 
         for (Face face : input) {
+            //Wenn das skalar Produkt vom Vektor und NormV Pos dann zeigt der polygon zum kamera
             if(face.getV1().dot(face.getN1()) <= 0) {
                 output.add(face);
             }
